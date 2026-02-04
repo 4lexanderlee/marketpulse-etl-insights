@@ -1,0 +1,98 @@
+# ============================================
+# ARCHIVOS DE CONFIGURACIÓN Y SECRETOS
+# ============================================
+.env
+.env.local
+.env.*.local
+config/secrets.yaml
+credentials.json
+
+# ============================================
+# ENTORNOS VIRTUALES DE PYTHON
+# ============================================
+venv/
+.venv/
+env/
+ENV/
+.virtualenv
+
+# ============================================
+# ARCHIVOS COMPILADOS DE PYTHON
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# ============================================
+# IDEs Y EDITORES
+# ============================================
+.vscode/
+.vscode/*
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*.swn
+*.sublime-workspace
+.DS_Store
+
+# ============================================
+# DATOS Y ARCHIVOS GRANDES
+# ============================================
+# Archivos de datos en diferentes formatos
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+*.json
+data/
+raw_data/
+processed_data/
+output/
+results/
+data/
+
+# Bases de datos locales
+*.db
+*.sqlite
+*.sqlite3
+*.pkl
+*.pickle
+
+# ============================================
+# ARCHIVOS TEMPORALES Y DE CACHÉ
+# ============================================
+.cache/
+*.cache
+*.tmp
+*.temp
+tmp/
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ============================================
+# LOGS Y ARCHIVOS DE SALIDA
+# ============================================
+*.log
+logs/
+*.csv.bak
+*.xlsx.bak
+
+# ============================================
+# ARCHIVOS DE DEPENDENCIAS
+# ============================================
+pip-log.txt
+pip-delete-this-directory.txt
+Pipfile.lock
+
+# ============================================
+# ARCHIVOS DE JUPYTER NOTEBOOKS (opcional)
+# ============================================
+# Descomenta si no quieres versionear notebooks
+# *.ipynb
