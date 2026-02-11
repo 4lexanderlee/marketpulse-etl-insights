@@ -38,8 +38,8 @@ marketpulse-etl-insights/
 │   └── main.py        # Orquestador del pipeline
 ├── requirements.txt   # Dependencias del proyecto
 └── README.md          # Documentación
-
-⚙️ Funcionamiento del Pipeline
+```
+## ⚙️ Funcionamiento del Pipeline
 1. Extracción (Extract)
 El módulo extract.py se encarga de conectar con el servidor de Stooq.
 
@@ -66,22 +66,22 @@ $$Retorno_t = \frac{Precio_t - Precio_{t-1}}{Precio_{t-1}}$$
 El archivo main.py actúa como el cerebro del sistema, asegurando que la transformación solo ocurra si la extracción fue exitosa.
 
 🚀 Cómo empezar
-    - Clonar el repositorio:
+* Clonar el repositorio:
     git clone [https://github.com/tu-usuario/marketpulse-etl-insights.git](https://github.com/tu-usuario/marketpulse-etl-insights.git)
 
-    - Instalar dependencias:
+* Instalar dependencias:
     pip install -r requirements.txt
 
-    - Ejecutar el pipeline:
+* Ejecutar el pipeline:
     python src/main.py
 
-📊 Próximos Pasos
+## 📊 Próximos Pasos
 [ ] Implementar un dashboard visual con Plotly o Streamlit.
 
 [ ] Agregar cálculos de indicadores técnicos (RSI, Medias Móviles).
 
 [ ] Automatizar la ejecución semanal mediante GitHub Actions.
 
-Desarrollado por: Alexander Lee Melgarejo Romero
+## Desarrollado por: Alexander Lee Melgarejo Romero
 
 Propósito: Proyecto de Portafolio - Data Engineering
