@@ -6,7 +6,7 @@
 .env.*.local
 config/secrets.yaml
 credentials.json
-
+credentials/
 # ============================================
 # ENTORNOS VIRTUALES DE PYTHON
 # ============================================

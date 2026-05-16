@@ -34,13 +34,13 @@ def download_market_data_stooq(tickers):
                 
                 file_name = f"{output_path}/{ticker}_historical.csv"
                 df.to_csv(file_name)
-                print(f"✅ ¡Éxito! {ticker} guardado en {file_name}")
+                print(f"¡Éxito! {ticker} guardado en {file_name}")
             
             # Pausa para simular comportamiento humano
             time.sleep(3)
             
         except Exception as e:
-            print(f"❌ Error con {ticker}: {e}")
+            print(f" Error con {ticker}: {e}")
 
 if __name__ == "__main__":
     

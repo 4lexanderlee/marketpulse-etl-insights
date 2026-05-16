@@ -1,0 +1,1 @@
+# Funciones auxiliares (logs, manejo de errores)

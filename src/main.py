@@ -1,6 +1,6 @@
 import time
-from extract import download_market_data_stooq
-from transform import transform_raw_data
+from src.extract.extract import download_market_data_stooq
+from src.transform.transform import transform_raw_data
 
 def run_pipeline():
     """
