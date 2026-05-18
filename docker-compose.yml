@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  marketpulse-spark:
+    build: .
+    container_name: marketpulse_spark_env
+    ports:
+      - "8888:8888" # Puerto para acceder a JupyterLab
+      - "4040:4040" # Puerto para la interfaz web de Spark (Spark UI)
+    volumes:
+      # Mapeamos tus carpetas locales dentro del contenedor
+      - ./data:/home/jovyan/work/data
+      - ./src:/home/jovyan/work/src
+      - ./notebooks:/home/jovyan/work/notebooks
+    env_file:
+      - .env
+    environment:
+      # Habilitamos la interfaz moderna de JupyterLab
+      - JUPYTER_ENABLE_LAB=yes
+      # Fijamos un token sencillo para entrar (puedes cambiarlo)
+      - JUPYTER_TOKEN=marketpulse2026
