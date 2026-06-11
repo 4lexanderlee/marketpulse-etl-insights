@@ -8,16 +8,21 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 class SparkProcesador:
     """
-    Pipeline de Spark para transformación de la capa Bronce a Plata (Data analitica)
-    Implemento de esquema, renombramiento de columnas y promedio moviles financieros.
+    Pipeline de Spark para transformación de la capa Bronce a Plata (Data analítica).
+    Lee desde Google Cloud Storage, aplica transformaciones y guarda en GCS como Parquet.
     """
-    def __init__(self, input_dir: str, output_dir: str):
+    def __init__(self, input_dir: str, output_dir: str, key_path: str):
         self.input_dir = input_dir
         self.output_dir = output_dir
-        #Iniciar la sesión de spark en local
+        # Iniciar la sesión de spark configurada con el conector de GCS
         self.spark = SparkSession.builder \
             .appName('MarketPulse_SilverLayer') \
             .master('local[*]') \
+            .config("spark.jars", "/home/jovyan/work/src/transform/gcs-connector-hadoop3-latest.jar") \
+            .config("spark.hadoop.fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem") \
+            .config("spark.hadoop.fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS") \
+            .config("spark.hadoop.google.cloud.auth.service.account.enable", "true") \
+            .config("spark.hadoop.google.cloud.auth.service.account.json.keyfile", key_path) \
             .getOrCreate()
         
         self.spark.sparkContext.setLogLevel("WARN")
@@ -26,7 +31,7 @@ class SparkProcesador:
         logging.info("Inicializando el proceso de la capa Plata...")
         
         # Ingesta de todos los archivos CSV desde la capa bronce
-        bronze_path = os.path.join(self.input_dir, "*_raw.csv")
+        bronze_path = f"{self.input_dir}*_raw.csv"
         try:
             df_raw = self.spark.read.csv(bronze_path, header=True, inferSchema=True)
         except Exception as e:
@@ -71,9 +76,10 @@ class SparkProcesador:
         self.spark.stop()
         
 if __name__ == "__main__":
-    INPUT_DIR = "/home/jovyan/work/data/01_bronze_raw"
-    OUTPUT_DIR = "/home/jovyan/work/data/02_silver_processed"
+    INPUT_DIR = "gs://marketpulse-bronze-ale/raw_data/"
+    OUTPUT_DIR = "gs://marketpulse-silver-ale/processed_data/"
+    KEY_PATH = "/home/jovyan/work/credentials/gcp-key.json"
     
-    proceso = SparkProcesador(input_dir=INPUT_DIR, output_dir=OUTPUT_DIR)
+    proceso = SparkProcesador(input_dir=INPUT_DIR, output_dir=OUTPUT_DIR, key_path=KEY_PATH)
     proceso.process_data()
     proceso.stop()

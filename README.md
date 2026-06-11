@@ -1,87 +1,60 @@
-# 📈 MarketPulse ETL & Insights
+# MarketPulse: ETL & Insights Financieros 🚀
 
-**MarketPulse ETL & Insights** es un pipeline de ingeniería de datos diseñado para automatizar la extracción, limpieza y análisis de activos financieros (ETFs como VOO, QQQ, SCHD). El proyecto transforma datos crudos de mercados bursátiles en información lista para la toma de decisiones de inversión.
+MarketPulse es un pipeline de ingeniería de datos *end-to-end* diseñado bajo una arquitectura **Lakehouse (Medallion Architecture)** en la nube. El objetivo principal es automatizar la ingesta, limpieza, transformación avanzada y exposición analítica de datos de mercado correspondientes a ETFs de crecimiento estratégico a largo plazo (`SPY`, `VOO`, `QQQ`).
 
+Originalmente concebido como un entorno puramente local, el proyecto ha migrado hacia un ecosistema **Cloud-Native en Google Cloud Platform (GCP)** enfocado en la eficiencia, escalabilidad y control de costos (FinOps).
 
+---
 
-## 🚀 Arquitectura del Proyecto
+## 🏗️ Arquitectura del Sistema
 
-El proyecto sigue una estructura de capas para garantizar la integridad de los datos:
+El flujo de datos sigue los principios de la arquitectura de medallas, ejecutándose de forma híbrida e integrada:
 
-1.  **Capa Raw (Bronce):** Datos históricos extraídos directamente de Stooq en formato CSV.
-2.  **Capa Processed (Plata):** Datos normalizados, con manejo de valores nulos y cálculo de retornos diarios.
-3.  **Capa Insights (Oro):** (En desarrollo) Generación de métricas clave como volatilidad y correlación.
+[ API Tiingo ]
+│
+▼ (Extracción - Pandas + gcsfs)
+┌────────────────────────────────────────────────────────┐
+│ Capa Bronce (Raw Data)                                 │
+│ - Bucket GCS: gs://marketpulse-bronze-ale/             │
+│ - Formato: CSV crudo por ETF                           │
+└────────────────────────────────────────────────────────┘
+│
+▼ (Procesamiento Distribuido - PySpark + Uber JAR)
+┌────────────────────────────────────────────────────────┐
+│ Capa Plata (Enriched / Conformed)                     │
+│ - Bucket GCS: gs://marketpulse-silver-ale/             │
+│ - Formato: Parquet altamente comprimido                │
+│ - Particionado por: ticker_etf                         │
+└────────────────────────────────────────────────────────┘
+### Componentes Clave:
+1. **Ingesta (Capa Bronce):** Cliente en Python (`requests`) que extrae el historial financiero desde la API de **Tiingo**. Utiliza la librería `gcsfs` para transmitir los DataFrames de Pandas de forma directa hacia Google Cloud Storage sin persistir residuos en el almacenamiento local.
+2. **Procesamiento (Capa Plata):** Motor de cálculo distribuido optimizado con **PySpark**. Lee el almacenamiento de objetos en la nube, procesa ventanas temporales y genera métricas analíticas avanzadas.
+3. **Almacenamiento e Infraestructura local:** Entorno contenedorizado mediante **Docker**, aislando los procesos de desarrollo y mapeando volúmenes seguros para las credenciales de GCP (Service Accounts).
+
+---
+
+## 📈 Ingeniería de Características (Capa Plata)
+
+Durante la fase de transformación en PySpark, los datos analíticos se enriquecen calculando indicadores financieros clave mediante funciones de ventana (`Window.partitionBy`):
+* **Retornos Diarios:** Fluctuación porcentual del precio de cierre ajustado de un día para otro.
+* **Medias Móviles (MA50 y MA200):** Indicadores de tendencia de mercado calculados sobre ventanas históricas móviles de 50 y 200 días.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-* **Lenguaje:** Python 3.x
-* **Librerías principales:** * `Pandas`: Manipulación y transformación de datos.
-    * `Pandas_datareader`: Conexión con APIs financieras.
-    * `Pathlib`: Gestión de rutas de archivos entre sistemas operativos.
-* **Fuente de Datos:** [Stooq](https://stooq.com/)
+* **Lenguaje Principal:** Python 3.11
+* **Procesamiento de Datos:** PySpark (Apache Spark 3.5), Pandas
+* **Infraestructura Cloud:** Google Cloud Storage (GCS)
+* **Contenedores y Entornos:** Docker / Docker Compose & JupyterLab
+* **Conectores de Infraestructura:** Hadoop GCS Connector (Fat JAR)
 
 ---
 
-## 📁 Estructura de Carpetas
+## 🚀 Próximos Pasos (Roadmap del Proyecto)
 
-```text
-marketpulse-etl-insights/
-├── data/
-│   ├── raw/           # CSVs originales (orden descendente, sin limpiar)
-│   ├── processed/     # CSVs limpios (orden cronológico, con retornos)
-│   └── outputs/       # Reportes y gráficos finales
-├── src/
-│   ├── extract.py     # Script de extracción robusta con reintentos
-│   ├── transform.py   # Lógica de limpieza y feature engineering
-│   └── main.py        # Orquestador del pipeline
-├── requirements.txt   # Dependencias del proyecto
-└── README.md          # Documentación
-```
-## ⚙️ Funcionamiento del Pipeline
-1. Extracción (Extract)
-El módulo extract.py se encarga de conectar con el servidor de Stooq.
-
-Robustez: Implementa una lógica de hasta 3 reintentos en caso de fallo de red.
-
-Mapeo: Traduce tickers comunes a la nomenclatura de Stooq (ej. VOO -> ^SPX).
-
-Cortesía: Incluye pausas programadas para evitar bloqueos de IP.
-
-
-2. Transformación (Transform)
-El módulo transform.py procesa los archivos de la carpeta raw:
-
-Ordenamiento: Invierte los datos para que sean cronológicos.
-
-Limpieza: Aplica Forward Fill para completar huecos en días feriados.
-
-Ingeniería de Datos: Calcula el daily_return (retorno diario) mediante la fórmula:
-
-$$Retorno_t = \frac{Precio_t - Precio_{t-1}}{Precio_{t-1}}$$
-
-
-3. Orquestación
-El archivo main.py actúa como el cerebro del sistema, asegurando que la transformación solo ocurra si la extracción fue exitosa.
-
-🚀 Cómo empezar
-* Clonar el repositorio:
-    git clone [https://github.com/tu-usuario/marketpulse-etl-insights.git](https://github.com/tu-usuario/marketpulse-etl-insights.git)
-
-* Instalar dependencias:
-    pip install -r requirements.txt
-
-* Ejecutar el pipeline:
-    python src/main.py
-
-## 📊 Próximos Pasos
-[ ] Implementar un dashboard visual con Plotly o Streamlit.
-
-[ ] Agregar cálculos de indicadores técnicos (RSI, Medias Móviles).
-
-[ ] Automatizar la ejecución semanal mediante GitHub Actions.
-
-## Desarrollado por: Alexander Lee Melgarejo Romero
-
-Propósito: Proyecto de Portafolio - Data Engineering
+- [x] **Fase 1 (Bronze):** Ingesta automatizada directa a la nube (GCS).
+- [x] **Fase 2 (Silver):** Procesamiento analítico distribuido con PySpark y almacenamiento eficiente en Parquet particionado.
+- [ ] **Fase 3 (Gold):** Creación de tablas y vistas analíticas optimizadas en **Google BigQuery** conectadas al Data Lake de forma directa.
+- [ ] **Fase 4 (Orquestación):** Construcción de DAGs funcionales en **Apache Airflow (Cloud Composer)** para automatizar el ciclo completo del pipeline.
+- [ ] **Fase 5 (Visualización):** Construcción de un cuadro de mando financiero dinámico utilizando **Looker Studio**.
