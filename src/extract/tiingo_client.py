@@ -13,20 +13,18 @@ class TiingoExtractor:
     """
     Clase para extraer los datos financieros desde la API 
     """
-    def __init__(self, tickers, year_back, output_dir):
+    def __init__(self, tickers, year_back, output):
         self.tickers = tickers
         self.end_date = datetime.now().strftime("%Y-%m-%d")
         self.start_date = (datetime.now() - timedelta(days=year_back * 365)).strftime("%Y-%m-%d")
-        self.output_dir = output_dir 
+        self.output_bucket_path = output
         #API KEY ALMACENADA EN .env
         self.api_key = os.getenv("TIINGO_API_KEY")
         if not self.api_key:
             raise ValueError("ERRO CRITICO -> No se encontró la variable TIINGO_API_KEY en .env")
         
     def fetch_data(self):
-        """Descarga los datos y los guarda en el Data Lake local"""
-        os.makedirs(self.output_dir, exist_ok=True)
-        
+        """Descarga los datos y los guarda en el Data Lake """        
         for ticker in self.tickers:
             logging.info(f"Extrayendo datos para {ticker} desde Tiingo API...")
             
@@ -57,7 +55,9 @@ class TiingoExtractor:
                 # Agregamos la columna de identificación del activo
                 df['Symbol'] = ticker
                 # Guardamos como CSV 
-                file_path = os.path.join(self.output_dir, f"{ticker}_raw.csv")
+                base_path = self.output_bucket_path if self.output_bucket_path.endswith('/') else f"{self.output_bucket_path}/"
+                file_path = f"{base_path}{ticker}_raw.csv"
+                # Magia de Pandas: Al detectar 'gs://', usa gcsfs y las credenciales del sistema para subirlo a GCP
                 df.to_csv(file_path, index=False)
                 
                 logging.info(f"Éxito: {len(df)} registros de {ticker} guardado en {file_path}")
@@ -67,7 +67,7 @@ class TiingoExtractor:
 if __name__ == "__main__":
     target_etfs = ['SPY', 'VOO', 'QQQ']
     year_back = 5
-    output_dir = "/home/jovyan/work/data/01_bronze_raw"
+    output = "gs://marketpulse-bronze-ale/raw_data/"
     
-    extractor = TiingoExtractor(tickers=target_etfs, year_back=year_back, output_dir=output_dir)
+    extractor = TiingoExtractor(tickers=target_etfs, year_back=year_back, output=output)
     extractor.fetch_data()

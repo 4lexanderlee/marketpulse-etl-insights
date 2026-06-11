@@ -12,6 +12,7 @@ services:
       - ./data:/home/jovyan/work/data
       - ./src:/home/jovyan/work/src
       - ./notebooks:/home/jovyan/work/notebooks
+      - ./credentials:/home/jovyan/work/credentials
     env_file:
       - .env
     environment:
@@ -19,3 +20,5 @@ services:
       - JUPYTER_ENABLE_LAB=yes
       # Fijamos un token sencillo para entrar (puedes cambiarlo)
       - JUPYTER_TOKEN=marketpulse2026
+      #Variable de entorno estándar de Google Cloud para autenticación
+      - GOOGLE_APPLICATION_CREDENTIALS=/home/jovyan/work/credentials/gcp-key.json
