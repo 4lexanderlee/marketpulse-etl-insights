@@ -55,6 +55,6 @@ Durante la fase de transformación en PySpark, los datos analíticos se enriquec
 
 - [x] **Fase 1 (Bronze):** Ingesta automatizada directa a la nube (GCS).
 - [x] **Fase 2 (Silver):** Procesamiento analítico distribuido con PySpark y almacenamiento eficiente en Parquet particionado.
-- [ ] **Fase 3 (Gold):** Creación de tablas y vistas analíticas optimizadas en **Google BigQuery** conectadas al Data Lake de forma directa.
-- [ ] **Fase 4 (Orquestación):** Construcción de DAGs funcionales en **Apache Airflow (Cloud Composer)** para automatizar el ciclo completo del pipeline.
+- [x] **Fase 3 (Gold):** Creación de tablas y vistas analíticas optimizadas en **Google BigQuery** conectadas al Data Lake de forma directa.
+- [x] **Fase 4 (Orquestación):** Construcción de DAGs funcionales en **Apache Airflow (Cloud Composer)** para automatizar el ciclo completo del pipeline.
 - [ ] **Fase 5 (Visualización):** Construcción de un cuadro de mando financiero dinámico utilizando **Looker Studio**.

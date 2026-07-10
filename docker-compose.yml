@@ -7,12 +7,14 @@ services:
     ports:
       - "8888:8888" # Puerto para acceder a JupyterLab
       - "4040:4040" # Puerto para la interfaz web de Spark (Spark UI)
+      - "8080:8080" #Puerto para Airflow
     volumes:
       # Mapeamos tus carpetas locales dentro del contenedor
       - ./data:/home/jovyan/work/data
       - ./src:/home/jovyan/work/src
       - ./notebooks:/home/jovyan/work/notebooks
       - ./credentials:/home/jovyan/work/credentials
+      - ./dags:/home/jovyan/work/dags
     env_file:
       - .env
     environment:
@@ -22,3 +24,6 @@ services:
       - JUPYTER_TOKEN=marketpulse2026
       #Variable de entorno estándar de Google Cloud para autenticación
       - GOOGLE_APPLICATION_CREDENTIALS=/home/jovyan/work/credentials/gcp-key.json
+      #Airflow 
+      - AIRFLOW__CORE__DAGS_FOLDER=/home/jovyan/work/dags
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False

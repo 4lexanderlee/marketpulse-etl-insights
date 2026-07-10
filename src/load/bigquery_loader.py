@@ -6,8 +6,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 class BigQueryLoader:
     """
-    Módulo para crear Tablas Externas en BigQuery leyendo directamente desde los archivos de 
-    la capa plata en Cloud Storage
+    Módulo para cargar fisicamente los datos desde GCS hacia las Tablas Nativas de BigQuery
     """
     def __init__(self, project_id: str, dataset_id: str, credentials_path: str):
         # Autenticación con GCP usando tu Service Account
@@ -30,33 +29,37 @@ class BigQueryLoader:
             else:
                 logging.error(f"Error al crear el dataset: {e}")
     
-    def create_external_table(self, table_name: str, gcs_uri: str, source_uri_prefix: str):
-        """Crear la tabla externa apuntando a GCS y configurando particiones."""
+    def load_native_table(self, table_name: str, gcs_uri: str, source_uri_prefix: str):
+        """Cargar los datos físicamente desde GCS hacia una tabla nativa en BigQuery."""
         table_id = f"{self.dataset_id}.{table_name}"
         
-        #1 -> Configurar la lectura externa de archivos Parquet
-        external_config = bigquery.ExternalConfig("PARQUET")
-        external_config.source_uris = [gcs_uri]
-        external_config.autodetect = True # BigQuery lee el esquema de Parquet automáticamente
+        #1 -> Configurar el Trabajo de Carga (Load Job)
+        job_config = bigquery.LoadJobConfig()
+        job_config.source_format = bigquery.SourceFormat.PARQUET
         
-        #2 -> Configurar Hive Partitioning (por el partitionBy("ticker_etf") de la capa Plata)
+        #2 -> Definir el comportamiento si la tabla ya existe
+        job_config.write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
+        
+        #3 -> Configurar Hive Partitioning (reconoce las particiones de PySpark)
         hive_partitioning = bigquery.HivePartitioningOptions()
         hive_partitioning.mode = "AUTO"
         hive_partitioning.source_uri_prefix = source_uri_prefix
-        external_config.hive_partitioning = hive_partitioning
+        job_config.hive_partitioning = hive_partitioning
         
-        #3 -> Definir la tabla y asignarle la configuración
-        table = bigquery.Table(table_id)
-        table.external_data_configuration = external_config
-        
-        #4 -> Eliminar si existe (para recrear la estructura) y crear tabla
+        #4 -> Ejecutar la carga y esperar resultados
         try: 
-            self.client.delete_table(table_id, not_found_ok=True)
-            table = self.client.create_table(table)
-            logging.info(f"Tabla externa '{table_name}' creada con éxito en BigQuery.")
-            logging.info(f"Apuntando a los datos en el Data Lake: {gcs_uri}")
+            logging.info(f"Iniciando carga nativa desde {gcs_uri} hacia la tabla {table_name}...")
+            #Iniciar el trabajp asincrono
+            load_job = self.client.load_table_from_uri(
+                gcs_uri, table_id, job_config=job_config
+            )
+            # Bloquear la ejecución hasta que BigQuery termine de procesar
+            load_job.result()
+            # Obtener metadatos de la tabla para confirmar la carga
+            table = self.client.get_table(table_id)
+            logging.info(f"Carga exitosa. La tabla nativa '{table_name}' ahora tiene {table.num_rows} filas.")
         except Exception as e:
-            logging.error(f"Fallo al crear la tabla externa: {e}")
+            logging.error(f"Fallo al ejecutar el Load Job nativo: {e}")
 
 if __name__ == "__main__":
     # ==== CONFIGURACIÓN =====
@@ -72,4 +75,4 @@ if __name__ == "__main__":
     
     loader = BigQueryLoader(project_id=PROJECT_ID, dataset_id=DATASET_ID, credentials_path=KEY_PATH)
     loader.create_dataset_if_not_exists()
-    loader.create_external_table(table_name=TABLE_NAME, gcs_uri=GCS_URI, source_uri_prefix=GCS_PREFIX)
+    loader.load_native_table(table_name=TABLE_NAME, gcs_uri=GCS_URI, source_uri_prefix=GCS_PREFIX)
