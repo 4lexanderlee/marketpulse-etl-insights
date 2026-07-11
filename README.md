@@ -1,60 +1,50 @@
-# MarketPulse: ETL & Insights Financieros 🚀
+# 📈 MarketPulse ETL & Insights: Lakehouse Architecture on GCP
 
-MarketPulse es un pipeline de ingeniería de datos *end-to-end* diseñado bajo una arquitectura **Lakehouse (Medallion Architecture)** en la nube. El objetivo principal es automatizar la ingesta, limpieza, transformación avanzada y exposición analítica de datos de mercado correspondientes a ETFs de crecimiento estratégico a largo plazo (`SPY`, `VOO`, `QQQ`).
+Un pipeline de ingeniería de datos *End-to-End* diseñado para la extracción, procesamiento distribuido y análisis de ETFs estratégicos (SPY, VOO, QQQ). Este proyecto implementa una **Arquitectura Medallón** orientada a la nube, priorizando la escalabilidad, la orquestación automatizada y la optimización de costos (FinOps).
 
-Originalmente concebido como un entorno puramente local, el proyecto ha migrado hacia un ecosistema **Cloud-Native en Google Cloud Platform (GCP)** enfocado en la eficiencia, escalabilidad y control de costos (FinOps).
-
----
-
-## 🏗️ Arquitectura del Sistema
-
-El flujo de datos sigue los principios de la arquitectura de medallas, ejecutándose de forma híbrida e integrada:
-
-[ API Tiingo ]
-│
-▼ (Extracción - Pandas + gcsfs)
-┌────────────────────────────────────────────────────────┐
-│ Capa Bronce (Raw Data)                                 │
-│ - Bucket GCS: gs://marketpulse-bronze-ale/             │
-│ - Formato: CSV crudo por ETF                           │
-└────────────────────────────────────────────────────────┘
-│
-▼ (Procesamiento Distribuido - PySpark + Uber JAR)
-┌────────────────────────────────────────────────────────┐
-│ Capa Plata (Enriched / Conformed)                     │
-│ - Bucket GCS: gs://marketpulse-silver-ale/             │
-│ - Formato: Parquet altamente comprimido                │
-│ - Particionado por: ticker_etf                         │
-└────────────────────────────────────────────────────────┘
-### Componentes Clave:
-1. **Ingesta (Capa Bronce):** Cliente en Python (`requests`) que extrae el historial financiero desde la API de **Tiingo**. Utiliza la librería `gcsfs` para transmitir los DataFrames de Pandas de forma directa hacia Google Cloud Storage sin persistir residuos en el almacenamiento local.
-2. **Procesamiento (Capa Plata):** Motor de cálculo distribuido optimizado con **PySpark**. Lee el almacenamiento de objetos en la nube, procesa ventanas temporales y genera métricas analíticas avanzadas.
-3. **Almacenamiento e Infraestructura local:** Entorno contenedorizado mediante **Docker**, aislando los procesos de desarrollo y mapeando volúmenes seguros para las credenciales de GCP (Service Accounts).
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
+[![Apache Spark](https://img.shields.io/badge/PySpark-Data_Processing-orange.svg)](https://spark.apache.org/)
+[![Airflow](https://img.shields.io/badge/Apache_Airflow-Orchestration-007A33.svg)](https://airflow.apache.org/)
+[![GCP](https://img.shields.io/badge/Google_Cloud-GCS_%7C_BigQuery-4285F4.svg)](https://cloud.google.com/)
+[![Power BI](https://img.shields.io/badge/Power_BI-Data_Viz-F2C811.svg)](https://powerbi.microsoft.com/)
 
 ---
 
-## 📈 Ingeniería de Características (Capa Plata)
+## 🏗️ Arquitectura del Sistema (Data Lakehouse)
 
-Durante la fase de transformación en PySpark, los datos analíticos se enriquecen calculando indicadores financieros clave mediante funciones de ventana (`Window.partitionBy`):
-* **Retornos Diarios:** Fluctuación porcentual del precio de cierre ajustado de un día para otro.
-* **Medias Móviles (MA50 y MA200):** Indicadores de tendencia de mercado calculados sobre ventanas históricas móviles de 50 y 200 días.
+El sistema sigue el paradigma Medallón para garantizar la calidad progresiva del dato:
 
----
+1. **Capa Bronce (Ingesta Raw):** Extracción automatizada de datos financieros globales desde la API de Tiingo mediante Python. Los datos crudos aterrizan en un Data Lake en Google Cloud Storage (GCS).
+2. **Capa Plata (Transformación):** Procesamiento distribuido utilizando **PySpark**. Se realiza la limpieza de datos, el tipado de esquemas y el cálculo de hechos derivados financieros (Medias Móviles de 50 y 200 días, retornos diarios y detección de anomalías). Los datos se guardan en formato `Parquet` particionado por Ticker para optimizar la lectura.
+3. **Capa Oro (Serving):** Ingesta física automatizada hacia **Google BigQuery** mediante *Load Jobs* nativos (`WRITE_TRUNCATE`). Esta decisión arquitectónica elimina la latencia de las tablas externas, garantizando tiempos de consulta en milisegundos para la herramienta de BI.
 
-## 🛠️ Stack Tecnológico
+## 🚀 Tecnologías Clave y Buenas Prácticas
 
-* **Lenguaje Principal:** Python 3.11
-* **Procesamiento de Datos:** PySpark (Apache Spark 3.5), Pandas
-* **Infraestructura Cloud:** Google Cloud Storage (GCS)
-* **Contenedores y Entornos:** Docker / Docker Compose & JupyterLab
-* **Conectores de Infraestructura:** Hadoop GCS Connector (Fat JAR)
+* **Orquestación:** `Apache Airflow` contenedorizado para la gestión de dependencias, reintentos y programación de flujos de trabajo (*DAGs*).
+* **Infraestructura como Código (IoC):** Entorno de desarrollo 100% reproducible mediante `Docker` y `docker-compose`.
+* **FinOps:** Minimización de costos de escaneo en BigQuery al utilizar tablas nativas particionadas e Import Mode en la capa de visualización.
+* **Control de Versiones y Modularidad:** Código estructurado bajo principios SOLID en la carpeta `src/`, separando responsabilidades de extracción, transformación y carga.
 
----
+## 📊 Dashboard y Visualización Financiera
 
-## 🚀 Próximos Pasos (Roadmap del Proyecto)
+El producto final es un tablero analítico construido en **Power BI**, el cual se conecta directamente a la Capa Oro en BigQuery. 
 
-- [x] **Fase 1 (Bronze):** Ingesta automatizada directa a la nube (GCS).
-- [x] **Fase 2 (Silver):** Procesamiento analítico distribuido con PySpark y almacenamiento eficiente en Parquet particionado.
-- [x] **Fase 3 (Gold):** Creación de tablas y vistas analíticas optimizadas en **Google BigQuery** conectadas al Data Lake de forma directa.
-- [x] **Fase 4 (Orquestación):** Construcción de DAGs funcionales en **Apache Airflow (Cloud Composer)** para automatizar el ciclo completo del pipeline.
-- [ ] **Fase 5 (Visualización):** Construcción de un cuadro de mando financiero dinámico utilizando **Looker Studio**.
+**Características del Tablero:**
+* Inteligencia de tiempo implementada con DAX (Tabla Calendario).
+* Visualización de "Cruces Dorados" y volatilidad diaria de los ETFs.
+* Controles de segmentación dinámica para un análisis profundo de rangos de fechas específicos.
+
+👉 *[Haz clic aquí para ver el PDF exportado del Dashboard interactivo](./docs/MarketPulse_Dashboard.pdf)*
+
+## ⚙️ Cómo ejecutar este proyecto localmente
+
+1. Clona este repositorio.
+2. Configura tus credenciales de Google Cloud (`gcp-key.json`) en la carpeta `credentials/` y tu API Key de Tiingo en un archivo `.env`.
+3. Levanta la infraestructura con Docker:
+   ```bash
+   docker-compose up -d
+   
+4. Inicializa la base de datos de metadatos de Airflow y arranca el planificador y el servidor web en el puerto 8080.
+
+5. Accede a Airflow, activa el DAG marketpulse_etl y monitorea la ejecución del pipeline en tiempo real.
+
